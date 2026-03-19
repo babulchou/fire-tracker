@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "last_updated": "2026-03-13",
+    "version": "2.0",
+    "note": "家庭版FIRE规划，此文件由AI通过对话方式维护，请勿手动编辑"
+  },
+  "profile": {
+    "current_age": 32,
+    "target_retirement_age": 45,
+    "fire_type": "Fat FIRE",
+    "investment_markets": ["US", "HK"],
+    "base_currency": "CNY",
+    "location": "中国",
+    "family_status": "双人家庭",
+    "planned_child_age_at_retirement": 10,
+    "note": "45岁退休，退休后高消费生活+养育孩子"
+  },
+  "family_members": {
+    "user": {
+      "role": "本人",
+      "age": 32,
+      "monthly_salary_after_tax": 27000,
+      "housing_fund": 11000,
+      "monthly_total_income": 38000,
+      "annual_bonus_cash": 200000,
+      "annual_bonus_stock": 300000,
+      "annual_bonus_stock_ticker": "00700.HK",
+      "annual_bonus_total": 500000,
+      "monthly_expense": 9000,
+      "note": "公积金按月全部取出"
+    },
+    "partner": {
+      "role": "男朋友",
+      "monthly_income": 30000,
+      "annual_bonus": 100000,
+      "monthly_expense": 8000,
+      "note": "年终奖约10万"
+    }
+  },
+  "monthly_cashflow": {
+    "user_income": 38000,
+    "partner_income": 30000,
+    "total_income": 68000,
+    "user_mortgage": 17000,
+    "user_living": 9000,
+    "partner_living": 8000,
+    "total_expenses": 34000,
+    "monthly_savings": 34000,
+    "currency": "CNY"
+  },
+  "annual_income": {
+    "monthly_salary_total": 816000,
+    "user_bonus": 500000,
+    "partner_bonus": 100000,
+    "bonus_total": 600000,
+    "annual_total_income": 1416000,
+    "annual_total_expenses": 408000,
+    "annual_savings": 1008000,
+    "annual_savings_usd": 140000,
+    "comprehensive_savings_rate": 71.2,
+    "currency": "CNY"
+  },
+  "assets": {
+    "cash": [
+      { "account": "人民币存款", "amount": 100000, "currency": "CNY", "amount_usd": 13889 },
+      { "account": "港币存款", "amount": 310000, "currency": "HKD", "amount_usd": 39744 },
+      { "account": "美元存款", "amount": 23000, "currency": "USD", "amount_usd": 23000 }
+    ],
+    "us_stocks": [
+      { "ticker": "LMND", "name": "Lemonade", "shares": 20, "cost_basis": 87.60, "current_price": 53.47, "market_value": 1069.40, "gain_loss": -682.60, "gain_loss_pct": -38.96, "currency": "USD" },
+      { "ticker": "TEM", "name": "Tempus AI", "shares": 15, "cost_basis": 56.50, "current_price": 50.00, "market_value": 750.00, "gain_loss": -97.50, "gain_loss_pct": -11.50, "currency": "USD" },
+      { "ticker": "UGL", "name": "2倍做多黄金ETF", "shares": 40, "cost_basis": 73.95, "current_price": 74.15, "market_value": 2966.00, "gain_loss": 8.00, "gain_loss_pct": 0.27, "currency": "USD" },
+      { "ticker": "META", "name": "Meta Platforms", "shares": 10, "cost_basis": 629.475, "current_price": 637.11, "market_value": 6371.10, "gain_loss": 76.35, "gain_loss_pct": 1.21, "currency": "USD" },
+      { "ticker": "SNDK", "name": "闪迪/西部数据", "shares": 10, "cost_basis": 485.00, "current_price": 621.67, "market_value": 6216.70, "gain_loss": 1366.70, "gain_loss_pct": 28.18, "currency": "USD" },
+      { "ticker": "NBIS", "name": "Nebius", "shares": 20, "cost_basis": 39.50, "current_price": 108.58, "market_value": 2171.60, "gain_loss": 1381.60, "gain_loss_pct": 174.89, "currency": "USD" }
+    ],
+    "hk_stocks": [
+      { "ticker": "00700", "name": "腾讯控股", "shares": 100, "cost_basis": 546.00, "current_price": 553.50, "market_value_hkd": 55350.00, "market_value_usd": 7096, "gain_loss_hkd": 750.00, "gain_loss_pct": 1.37, "currency": "HKD", "note": "每年年终奖+30万CNY等值腾讯股票" }
+    ],
+    "other_investments": [],
+    "real_estate": [
+      {
+        "description": "自住房产",
+        "estimated_value": 3500000,
+        "mortgage_balance": 3100000,
+        "net_equity": 400000,
+        "monthly_payment": 17000,
+        "interest_rate": 3.2,
+        "remaining_years": 25,
+        "currency": "CNY",
+        "estimated_value_usd": 486111,
+        "mortgage_balance_usd": 430556,
+        "net_equity_usd": 55556
+      }
+    ]
+  },
+  "liabilities": [
+    {
+      "type": "房贷",
+      "balance": 3100000,
+      "interest_rate": 3.2,
+      "monthly_payment": 17000,
+      "currency": "CNY",
+      "maturity": "2051年",
+      "remaining_years": 25,
+      "balance_usd": 430556,
+      "note": "45岁退休时还剩12年房贷"
+    }
+  ],
+  "assumptions": {
+    "expected_annual_return": 0.07,
+    "inflation_rate": 0.03,
+    "safe_withdrawal_rate": 0.035,
+    "life_expectancy": 90,
+    "usd_cny_rate": 7.2,
+    "usd_hkd_rate": 7.8,
+    "child_education_path": "国际学校+海外本科",
+    "retirement_lifestyle": "高消费"
+  },
+  "retirement_expense_model": {
+    "note": "45岁退休后的分阶段年支出模型（2026年价格，不含通胀）",
+    "phases": [
+      {
+        "name": "阶段一：房贷+孩子国际学校",
+        "age_range": "45-53岁",
+        "child_age": "10-18岁",
+        "years": 8,
+        "monthly_breakdown": {
+          "mortgage": 17000,
+          "couple_living": 15000,
+          "travel": 6700,
+          "healthcare": 5000,
+          "transport": 3000,
+          "entertainment": 3000,
+          "home_misc": 3000,
+          "child_school_fee": 16700,
+          "child_extracurricular": 5000,
+          "child_living": 3000
+        },
+        "monthly_total": 77400,
+        "annual_total": 928800,
+        "annual_total_rounded": 930000
+      },
+      {
+        "name": "阶段二：房贷+孩子海外留学",
+        "age_range": "53-57岁",
+        "child_age": "18-22岁",
+        "years": 4,
+        "monthly_breakdown": {
+          "mortgage": 17000,
+          "couple_living": 15000,
+          "travel": 6700,
+          "healthcare": 5000,
+          "transport": 3000,
+          "entertainment": 3000,
+          "home_misc": 3000,
+          "child_overseas_total": 37500
+        },
+        "monthly_total": 90200,
+        "annual_total": 1082400,
+        "annual_total_rounded": 1080000
+      },
+      {
+        "name": "阶段三：无房贷+孩子独立",
+        "age_range": "57-65岁",
+        "child_age": "22岁+独立",
+        "years": 8,
+        "monthly_breakdown": {
+          "couple_living": 15000,
+          "travel": 6700,
+          "healthcare": 6000,
+          "transport": 3000,
+          "entertainment": 3000,
+          "home_misc": 3000
+        },
+        "monthly_total": 36700,
+        "annual_total": 440400,
+        "annual_total_rounded": 440000
+      },
+      {
+        "name": "阶段四：老年生活",
+        "age_range": "65-90岁",
+        "child_age": "独立",
+        "years": 25,
+        "monthly_breakdown": {
+          "couple_living": 13000,
+          "travel": 3000,
+          "healthcare": 10000,
+          "transport": 2000,
+          "entertainment": 2000,
+          "home_misc": 3000
+        },
+        "monthly_total": 33000,
+        "annual_total": 396000,
+        "annual_total_rounded": 400000,
+        "note": "医疗支出上升，旅行减少，有社保补充"
+      }
+    ]
+  },
+  "fire_target_calculation": {
+    "method": "分阶段现金流折现法",
+    "discount_rate": 0.04,
+    "note": "用实际回报率(名义7%-通胀3%=4%)折现所有未来支出到45岁时点",
+    "present_value_breakdown": {
+      "phase1_pv_cny": 6261453,
+      "phase1_note": "45-53岁(8年), 年支出93万, PV=626万",
+      "phase2_pv_cny": 2864515,
+      "phase2_note": "53-57岁(4年), 年支出108万, PV=286万",
+      "phase3_pv_cny": 1850311,
+      "phase3_note": "57-65岁(8年), 年支出44万, PV=185万",
+      "phase4_pv_cny": 2851885,
+      "phase4_note": "65-90岁(25年), 年支出40万, PV=285万",
+      "subtotal_pv_cny": 13828164,
+      "safety_margin_pct": 15,
+      "total_with_margin_cny": 15902389
+    },
+    "fire_target_cny": 16000000,
+    "fire_target_usd": 2222222,
+    "fire_target_cny_wan": 1600,
+    "unit": "万元人民币"
+  },
+  "fire_summary": {
+    "total_cash_usd": 76633,
+    "total_us_stocks_usd": 19543,
+    "total_hk_stocks_usd": 7096,
+    "total_financial_assets_usd": 103272,
+    "total_financial_assets_cny": 743558,
+    "real_estate_equity_usd": 55556,
+    "total_assets_usd": 158828,
+    "total_liabilities_usd": 430556,
+    "net_worth_usd": 158828,
+    "net_worth_cny": 1143562,
+    "fire_target_cny": 16000000,
+    "fire_target_usd": 2222222,
+    "fire_progress_pct": 4.6,
+    "projected_fire_age": 43,
+    "years_to_fire": 11,
+    "savings_rate_pct": 71.2,
+    "annual_savings_cny": 1008000,
+    "annual_savings_usd": 140000,
+    "note": "家庭版：Fat FIRE，含高消费生活+孩子教育"
+  },
+  "fire_projection": [
+    { "age": 32, "year": 2026, "projected_assets_cny": 743558, "projected_assets_usd": 103272, "fire_pct": 4.6 },
+    { "age": 33, "year": 2027, "projected_assets_cny": 1803607, "projected_assets_usd": 250501, "fire_pct": 11.3 },
+    { "age": 34, "year": 2028, "projected_assets_cny": 2937860, "projected_assets_usd": 408036, "fire_pct": 18.4 },
+    { "age": 35, "year": 2029, "projected_assets_cny": 4151510, "projected_assets_usd": 576599, "fire_pct": 25.9 },
+    { "age": 36, "year": 2030, "projected_assets_cny": 5450115, "projected_assets_usd": 756960, "fire_pct": 34.1 },
+    { "age": 37, "year": 2031, "projected_assets_cny": 6839623, "projected_assets_usd": 949948, "fire_pct": 42.7 },
+    { "age": 38, "year": 2032, "projected_assets_cny": 8326397, "projected_assets_usd": 1156444, "fire_pct": 52.0 },
+    { "age": 39, "year": 2033, "projected_assets_cny": 9917245, "projected_assets_usd": 1377395, "fire_pct": 62.0 },
+    { "age": 40, "year": 2034, "projected_assets_cny": 11619452, "projected_assets_usd": 1613813, "fire_pct": 72.6 },
+    { "age": 41, "year": 2035, "projected_assets_cny": 13440814, "projected_assets_usd": 1866780, "fire_pct": 84.0 },
+    { "age": 42, "year": 2036, "projected_assets_cny": 15389671, "projected_assets_usd": 2137454, "fire_pct": 96.2 },
+    { "age": 43, "year": 2037, "projected_assets_cny": 17474948, "projected_assets_usd": 2427076, "fire_pct": 109.2 }
+  ],
+  "allocation": {
+    "cash_pct": 74.2,
+    "us_stocks_pct": 18.9,
+    "hk_stocks_pct": 6.9,
+    "bonds_pct": 0,
+    "other_pct": 0,
+    "recommended": {
+      "us_stocks_pct": 50,
+      "hk_intl_stocks_pct": 17.5,
+      "bonds_pct": 12.5,
+      "gold_commodity_pct": 7.5,
+      "cash_pct": 12.5
+    }
+  },
+  "milestones": [
+    { "name": "应急基金(6个月家庭支出)", "target_cny": 204000, "current_cny": 551760, "target_usd": 28333, "current_usd": 76633, "status": "已达成", "note": "现金储备远超应急金需求" },
+    { "name": "家庭金融资产100万", "target_cny": 1000000, "current_cny": 743558, "target_usd": 138889, "current_usd": 103272, "status": "进行中", "progress_pct": 74.4 },
+    { "name": "家庭金融资产500万", "target_cny": 5000000, "current_cny": 743558, "target_usd": 694444, "current_usd": 103272, "status": "进行中", "progress_pct": 14.9 },
+    { "name": "FIRE目标50% (800万)", "target_cny": 8000000, "current_cny": 743558, "target_usd": 1111111, "current_usd": 103272, "status": "进行中", "progress_pct": 9.3 },
+    { "name": "家庭金融资产1000万", "target_cny": 10000000, "current_cny": 743558, "target_usd": 1388889, "current_usd": 103272, "status": "进行中", "progress_pct": 7.4 },
+    { "name": "FIRE目标100% (1600万)", "target_cny": 16000000, "current_cny": 743558, "target_usd": 2222222, "current_usd": 103272, "status": "进行中", "progress_pct": 4.6 }
+  ],
+  "change_log": [
+    { "date": "2026-03-12", "action": "建立档案", "details": "初始化财务档案系统" },
+    { "date": "2026-03-13", "action": "首次录入完整数据", "details": "录入收支、美股6只持仓、港股腾讯、三币种存款" },
+    { "date": "2026-03-13", "action": "补充房贷和年终奖", "details": "房贷310万/3.2%/25年，房产估值350万，年终奖50万" },
+    { "date": "2026-03-13", "action": "升级为家庭版Fat FIRE", "details": "加入男朋友收入(月3万+年终10万)，重算FIRE目标：1600万" }
+  ]
+}

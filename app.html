@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0b0e14">
+    <title>FIRE 家庭财务自由</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        :root {
+            --bg: #0b0e14; --bg2: #131720; --bg3: #1a1f2e; --bg4: #222839;
+            --border: #2a3042; --text: #e2e4e9; --text2: #8b93a7; --text3: #5a6178;
+            --accent: #7c6cf0; --accent2: #a78bfa;
+            --green: #34d399; --green-bg: rgba(52,211,153,0.12);
+            --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.12);
+            --red: #f87171; --red-bg: rgba(248,113,113,0.12);
+            --blue: #60a5fa; --blue-bg: rgba(96,165,250,0.12);
+            --radius: 14px; --shadow: 0 2px 16px rgba(0,0,0,0.25);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --nav-h: 64px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.5;
+            min-height: 100vh; overflow-x: hidden;
+            padding-top: var(--safe-top);
+        }
+
+        /* ====== App Shell ====== */
+        .app-header {
+            position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(135deg, #1a1040 0%, #2d1b69 40%, #1a1040 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px 12px; text-align: center;
+            padding-top: calc(var(--safe-top) + 16px);
+        }
+        .app-header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(135deg, #c4b5fd, #f0abfc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app-header .sub { color: var(--text3); font-size: 11px; margin-top: 2px; }
+        .app-header .sync-status { position: absolute; right: 16px; top: calc(var(--safe-top) + 18px); font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+        .app-header .sync-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+        .page-content {
+            padding: 16px 16px calc(var(--nav-h) + var(--safe-bottom) + 16px);
+            min-height: calc(100vh - 60px);
+        }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ====== Bottom Nav ====== */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+            background: rgba(19,23,32,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            height: var(--nav-h); padding-bottom: var(--safe-bottom);
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 8px 12px; cursor: pointer; transition: all 0.2s;
+            color: var(--text3); font-size: 10px; font-weight: 500;
+            -webkit-user-select: none; user-select: none;
+        }
+        .nav-item.active { color: var(--accent2); }
+        .nav-item svg { width: 24px; height: 24px; }
+
+        /* ====== Cards ====== */
+        .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
+        .card-head { font-size: 13px; font-weight: 600; color: var(--text2); letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .card-head .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+        /* ====== Stat Grid ====== */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+        .stat-card .label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-card .val { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+        .stat-card .sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+        /* ====== Progress Ring ====== */
+        .ring-section { display: flex; flex-direction: column; align-items: center; padding: 16px 0; }
+        .ring { position: relative; width: 140px; height: 140px; }
+        .ring svg { transform: rotate(-90deg); }
+        .ring .center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+        .ring .center .pct { font-size: 28px; font-weight: 700; color: var(--accent2); }
+        .ring .center .lbl { font-size: 10px; color: var(--text3); }
+
+        /* ====== Tables ====== */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 6px 8px; font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); }
+        td { padding: 8px; border-bottom: 1px solid rgba(42,48,66,0.4); color: var(--text); }
+        tr:last-child td { border-bottom: none; }
+        .ticker { font-weight: 700; color: var(--accent2); }
+        .mono { font-family: 'SF Mono', monospace; font-size: 11px; }
+
+        /* ====== Tags ====== */
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+        .tag-green { background: var(--green-bg); color: var(--green); }
+        .tag-yellow { background: var(--yellow-bg); color: var(--yellow); }
+        .tag-red { background: var(--red-bg); color: var(--red); }
+        .tag-blue { background: var(--blue-bg); color: var(--blue); }
+
+        /* ====== Allocation Bar ====== */
+        .alloc-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 10px 0 8px; }
+        .alloc-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--text2); }
+        .alloc-legend .item { display: flex; align-items: center; gap: 4px; }
+        .alloc-legend .swatch { width: 7px; height: 7px; border-radius: 50%; }
+
+        /* ====== Recommendations ====== */
+        .rec { padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; border-left: 3px solid; }
+        .rec h4 { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+        .rec p { font-size: 11px; color: var(--text2); line-height: 1.6; }
+        .rec-info { background: var(--blue-bg); border-color: var(--blue); }
+        .rec-info h4 { color: var(--blue); }
+        .rec-warn { background: var(--yellow-bg); border-color: var(--yellow); }
+        .rec-warn h4 { color: var(--yellow); }
+        .rec-good { background: var(--green-bg); border-color: var(--green); }
+        .rec-good h4 { color: var(--green); }
+
+        /* ====== Chart ====== */
+        .chart-box { position: relative; height: 220px; margin-top: 8px; }
+
+        /* ====== Phase Cards ====== */
+        .phase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .phase-card { background: var(--bg3); border-radius: 10px; padding: 12px; border-left: 3px solid; }
+        .phase-card .name { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+        .phase-card .age { font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+        .phase-card .amount { font-size: 18px; font-weight: 700; }
+        .phase-card .detail { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+        /* ====== Edit Forms ====== */
+        .form-group { margin-bottom: 14px; }
+        .form-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .form-row > * { flex: 1; }
+        .form-input {
+            width: 100%; padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text3); }
+        .form-input-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; display: block; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 600;
+            border: none; cursor: pointer; transition: all 0.2s; width: 100%;
+            font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), #9b87f5); color: white; }
+        .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+        .btn-sm { padding: 8px 14px; font-size: 12px; width: auto; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+        .section-title:first-child { margin-top: 0; }
+        .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+        /* ====== Log ====== */
+        .log-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(42,48,66,0.4); font-size: 12px; }
+        .log-item:last-child { border-bottom: none; }
+        .log-date { color: var(--text3); min-width: 80px; font-family: monospace; font-size: 11px; }
+        .log-text { color: var(--text2); }
+
+        /* ====== Auth ====== */
+        .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 40px 20px; text-align: center; }
+        .auth-screen .logo { font-size: 48px; margin-bottom: 16px; }
+        .auth-screen h2 { font-size: 20px; margin-bottom: 6px; }
+        .auth-screen .desc { color: var(--text2); font-size: 13px; margin-bottom: 24px; max-width: 300px; }
+        .auth-box { width: 100%; max-width: 320px; }
+        .auth-box .form-input { margin-bottom: 10px; }
+        .auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--text3); font-size: 12px; }
+        .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .auth-link { color: var(--accent2); font-size: 13px; cursor: pointer; margin-top: 12px; }
+
+        /* ====== Toast ====== */
+        .toast {
+            position: fixed; top: calc(var(--safe-top) + 70px); left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 20px;
+            font-size: 13px; color: var(--text); z-index: 9999; opacity: 0; transition: all 0.3s;
+            pointer-events: none; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: var(--green); color: var(--green); }
+        .toast.error { border-color: var(--red); color: var(--red); }
+
+        /* ====== Pull to refresh ====== */
+        .pull-indicator { text-align: center; padding: 8px; font-size: 11px; color: var(--text3); display: none; }
+
+        /* ====== Milestone progress bar ====== */
+        .milestone-bar { height: 4px; background: var(--bg4); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .milestone-bar .fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+        /* ====== Settings ====== */
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(42,48,66,0.4); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item .label { font-size: 14px; }
+        .setting-item .value { font-size: 13px; color: var(--text2); }
+
+        /* ====== Collapse Section ====== */
+        .collapse-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 0; cursor: pointer; -webkit-user-select: none; user-select: none;
+        }
+        .collapse-header .title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .collapse-header .arrow { font-size: 12px; color: var(--text3); transition: transform 0.25s; }
+        .collapse-header.open .arrow { transform: rotate(180deg); }
+        .collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+        .collapse-body.open { max-height: 5000px; }
+
+        /* ====== Modal ====== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: var(--bg2); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px;
+            max-height: 80vh; overflow-y: auto; padding: 20px 20px calc(var(--safe-bottom) + 20px);
+            transform: translateY(100%); transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+        .modal-bar { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+        .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+
+        /* ====== Editable List Item ====== */
+        .edit-list-item {
+            background: var(--bg3); border-radius: 10px; padding: 12px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 10px; position: relative;
+        }
+        .edit-list-item .item-info { flex: 1; min-width: 0; }
+        .edit-list-item .item-ticker { font-weight: 700; color: var(--accent2); font-size: 13px; }
+        .edit-list-item .item-name { font-size: 11px; color: var(--text3); }
+        .edit-list-item .item-value { font-size: 14px; font-weight: 600; text-align: right; }
+        .edit-list-item .item-sub { font-size: 10px; color: var(--text2); text-align: right; }
+        .edit-list-actions { display: flex; gap: 6px; }
+        .edit-list-actions .icon-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text2); display: flex; align-items: center;
+            justify-content: center; cursor: pointer; font-size: 14px; transition: all 0.2s;
+        }
+        .edit-list-actions .icon-btn:active { background: var(--bg4); }
+        .icon-btn-danger { border-color: rgba(248,113,113,0.3) !important; color: var(--red) !important; }
+
+        /* ====== Add Button ====== */
+        .add-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px; border-radius: 10px; border: 1px dashed var(--border);
+            background: transparent; color: var(--text3); font-size: 13px; width: 100%;
+            cursor: pointer; transition: all 0.2s; font-family: inherit; margin-top: 8px;
+        }
+        .add-btn:active { border-color: var(--accent); color: var(--accent); background: rgba(124,108,240,0.05); }
+
+        /* ====== Confirm Bar ====== */
+        .save-bar {
+            position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom)); left: 0; right: 0;
+            padding: 12px 16px; background: rgba(19,23,32,0.95); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border);
+            z-index: 150; display: none; gap: 10px;
+        }
+        .save-bar.show { display: flex; }
+        .save-bar .btn { flex: 1; }
+
+        /* ====== Inline Delete Confirm ====== */
+        .confirm-delete {
+            background: var(--red-bg); border: 1px solid rgba(248,113,113,0.3);
+            border-radius: 10px; padding: 12px; margin-bottom: 8px; text-align: center;
+        }
+        .confirm-delete p { font-size: 13px; color: var(--text); margin-bottom: 10px; }
+        .confirm-delete .btns { display: flex; gap: 8px; }
+        .confirm-delete .btns button { flex: 1; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        /* safe area for iPhone */
+        @supports (padding: max(0px)) {
+            .bottom-nav { padding-bottom: max(var(--safe-bottom), 8px); height: calc(var(--nav-h) + max(var(--safe-bottom), 0px)); }
+            .page-content { padding-bottom: calc(var(--nav-h) + max(var(--safe-bottom), 8px) + 16px); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- App Header -->
+<div class="app-header">
+    <h1>FIRE 家庭财务自由</h1>
+    <div class="sub" id="headerSub">Fat FIRE · 45岁退休</div>
+    <div class="sync-status" id="syncStatus">
+        <div class="sync-dot" style="background:var(--green);"></div>
+        <span>已同步</span>
+    </div>
+</div>
+
+<!-- Pages -->
+<div class="page-content">
+
+<!-- ========== PAGE: Dashboard ========== -->
+<div class="page active" id="page-dashboard">
+    <div id="dashContent">
+        <div style="text-align:center;padding:60px 20px;color:var(--text3);">加载中...</div>
+    </div>
+</div>
+
+<!-- ========== PAGE: Assets ========== -->
+<div class="page" id="page-assets">
+    <div id="assetsContent">
+        <div style="text-align:center;padding:60px 20px;color:var(--text3);">加载中...</div>
+    </div>
+</div>
+
+<!-- ========== PAGE: Edit ========== -->
+<div class="page" id="page-edit">
+    <div id="editContent"></div>
+</div>
+
+<!-- ========== PAGE: Profile ========== -->
+<div class="page" id="page-profile">
+    <div id="profileContent"></div>
+</div>
+
+</div>
+
+<!-- Modal for editing stocks/cash/liabilities -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content">
+        <div class="modal-bar"></div>
+        <div class="modal-title" id="modalTitle">编辑</div>
+        <div id="modalBody"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn btn-outline" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" id="modalSaveBtn" onclick="modalSave()">确认</button>
+        </div>
+    </div>
+</div>
+
+<!-- Save Confirm Bar -->
+<div class="save-bar" id="saveBar">
+    <button class="btn btn-outline" onclick="cancelEdits()">放弃修改</button>
+    <button class="btn btn-primary" onclick="confirmSaveEdits()">保存所有修改</button>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>概览</span>
+    </div>
+    <div class="nav-item" data-page="assets" onclick="switchPage('assets')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4h-4z"/></svg>
+        <span>资产</span>
+    </div>
+    <div class="nav-item" data-page="edit" onclick="switchPage('edit')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>编辑</span>
+    </div>
+    <div class="nav-item" data-page="profile" onclick="switchPage('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>我的</span>
+    </div>
+</div>
+
+<script>
+// ==================== CONFIG ====================
+const SUPABASE_URL = '';  // 用户需配置
+const SUPABASE_KEY = '';  // 用户需配置
+let supabaseClient = null;
+let currentUser = null;
+
+// ==================== STATE ====================
+let DATA = null;
+let chartInstance = null;
+
+// ==================== HELPERS ====================
+function fmt(n) { if (n == null) return '--'; if (n >= 1e6) return '$'+(n/1e6).toFixed(2)+'M'; if (n >= 1e3) return '$'+(n/1e3).toFixed(1)+'K'; return '$'+n.toFixed(0); }
+function fmtCNY(n) { if (n == null) return '--'; if (n >= 1e4) return '\u00a5'+(n/1e4).toFixed(0)+'万'; return '\u00a5'+Math.round(n).toLocaleString(); }
+function fmtFull(n) { if (n == null) return '--'; return '$'+Math.round(n).toLocaleString(); }
+function fmtPct(n) { if (n == null) return '--%'; return n.toFixed(1)+'%'; }
+
+function toast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast', 2000);
+}
+
+// ==================== NAVIGATION ====================
+function switchPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelector(`.nav-item[data-page="${name}"]`).classList.add('active');
+    // Lazy render
+    if (name === 'assets' && DATA) renderAssets();
+    if (name === 'edit' && DATA) renderEdit();
+    if (name === 'profile') renderProfile();
+    // Scroll to top
+    window.scrollTo(0, 0);
+}
+
+// ==================== DATA LOADING ====================
+async function loadData() {
+    // Try Supabase first
+    if (supabaseClient && currentUser) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('fire_data')
+                .select('data')
+                .eq('user_id', currentUser.id)
+                .single();
+            if (data && !error) {
+                DATA = data.data;
+                updateSyncStatus('synced');
+                return;
+            }
+        } catch (e) { console.log('Supabase load failed, using local'); }
+    }
+    // Try localStorage
+    const local = localStorage.getItem('fire_data');
+    if (local) {
+        try { DATA = JSON.parse(local); return; } catch(e) {}
+    }
+    // Fallback: fetch JSON
+    try {
+        const resp = await fetch('financial_data.json?' + Date.now());
+        if (resp.ok) {
+            DATA = await resp.json();
+            localStorage.setItem('fire_data', JSON.stringify(DATA));
+        }
+    } catch(e) {
+        try {
+            const resp2 = await fetch('financial_data.json');
+            if (resp2.ok) {
+                DATA = await resp2.json();
+                localStorage.setItem('fire_data', JSON.stringify(DATA));
+            }
+        } catch(e2) {}
+    }
+}
+
+async function saveData() {
+    if (!DATA) return;
+    // Update timestamp
+    DATA.meta.last_updated = new Date().toISOString().split('T')[0];
+    // Save local
+    localStorage.setItem('fire_data', JSON.stringify(DATA));
+    // Save to Supabase
+    if (supabaseClient && currentUser) {
+        try {
+            const { error } = await supabaseClient
+                .from('fire_data')
+                .upsert({ user_id: currentUser.id, data: DATA, updated_at: new Date().toISOString() });
+            if (!error) {
+                updateSyncStatus('synced');
+                toast('已同步到云端', 'success');
+                return;
+            }
+        } catch(e) {}
+        updateSyncStatus('local');
+        toast('已保存到本地', '');
+    } else {
+        updateSyncStatus('local');
+        toast('已保存到本地', 'success');
+    }
+}
+
+function updateSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    if (status === 'synced') {
+        el.innerHTML = '<div class="sync-dot" style="background:var(--green);"></div><span>已同步</span>';
+    } else if (status === 'syncing') {
+        el.innerHTML = '<div class="sync-dot" style="background:var(--yellow);"></div><span>同步中...</span>';
+    } else {
+        el.innerHTML = '<div class="sync-dot" style="background:var(--text3);"></div><span>本地</span>';
+    }
+}
+
+// ==================== RENDER: DASHBOARD ====================
+function renderDashboard() {
+    if (!DATA) {
+        document.getElementById('dashContent').innerHTML = `
+            <div style="text-align:center;padding:60px 20px;">
+                <div style="font-size:48px;margin-bottom:16px;">&#x1f4ca;</div>
+                <h2 style="font-size:18px;margin-bottom:8px;">开始你的 FIRE 之旅</h2>
+                <p style="color:var(--text2);font-size:13px;margin-bottom:20px;">点击底部「编辑」录入你的财务数据</p>
+            </div>`;
+        return;
+    }
+    const s = DATA.fire_summary;
+    const p = DATA.profile;
+    const cf = DATA.monthly_cashflow;
+    const alloc = DATA.allocation;
+    const proj = DATA.fire_projection || [];
+    const assumptions = DATA.assumptions;
+    const ann = DATA.annual_income || {};
+    const currSym = '\u00a5';
+
+    const progress = s.fire_progress_pct || 0;
+    const circ = 2 * Math.PI * 58;
+    const offset = circ - (circ * Math.min(progress, 100) / 100);
+
+    const fireLabels = { lean:'Lean FIRE', standard:'标准 FIRE', fat:'Fat FIRE', 'Fat FIRE':'Fat FIRE', 'Lean FIRE':'Lean FIRE', 'Standard FIRE':'标准 FIRE' };
+    const fireLabel = fireLabels[p.fire_type] || p.fire_type || '待确认';
+
+    // Allocation
+    const allocColors = { us_stocks:'#7c6cf0', hk_stocks:'#e879f9', bonds:'#34d399', cash:'#94a3b8', other:'#fbbf24' };
+    const allocItems = [];
+    if (alloc.us_stocks_pct) allocItems.push({name:'美股',pct:alloc.us_stocks_pct,color:allocColors.us_stocks});
+    if (alloc.hk_stocks_pct) allocItems.push({name:'港股',pct:alloc.hk_stocks_pct,color:allocColors.hk_stocks});
+    if (alloc.bonds_pct) allocItems.push({name:'债券',pct:alloc.bonds_pct,color:allocColors.bonds});
+    if (alloc.cash_pct) allocItems.push({name:'现金',pct:alloc.cash_pct,color:allocColors.cash});
+    if (alloc.other_pct) allocItems.push({name:'其他',pct:alloc.other_pct,color:allocColors.other});
+
+    // Recommendations
+    let recsHTML = '';
+    if (s.savings_rate_pct != null) {
+        if (s.savings_rate_pct < 30) recsHTML += `<div class="rec rec-warn"><h4>储蓄率偏低</h4><p>当前储蓄率 ${s.savings_rate_pct.toFixed(0)}%，建议提升至40%以上。</p></div>`;
+        else if (s.savings_rate_pct >= 50) recsHTML += `<div class="rec rec-good"><h4>储蓄率优秀</h4><p>当前综合储蓄率 ${s.savings_rate_pct.toFixed(0)}%（含年终奖），非常出色！</p></div>`;
+        else recsHTML += `<div class="rec rec-info"><h4>储蓄率良好</h4><p>当前储蓄率 ${s.savings_rate_pct.toFixed(0)}%，处于合理水平。</p></div>`;
+    }
+    if (alloc.cash_pct && alloc.cash_pct > 30) {
+        recsHTML += `<div class="rec rec-warn"><h4>现金占比过高 (${alloc.cash_pct.toFixed(0)}%)</h4><p>建议仅保留3-6个月应急金，将剩余现金逐步投入宽基ETF。</p></div>`;
+    }
+    const yearsToRetire = s.years_to_fire || (p.current_age ? p.target_retirement_age - p.current_age : null);
+    if (yearsToRetire != null && yearsToRetire > 15) {
+        recsHTML += `<div class="rec rec-good"><h4>积累期策略</h4><p>距退休${yearsToRetire}年，保持85-90%股票配置，坚持定投。</p></div>`;
+    }
+
+    document.getElementById('dashContent').innerHTML = `
+        <!-- Top Stats -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="label">FIRE 目标</div>
+                <div class="val" style="color:var(--accent2);">${s.fire_target_cny ? fmtCNY(s.fire_target_cny) : fmt(s.fire_target_usd)}</div>
+                <div class="sub">${fireLabel}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">家庭金融资产</div>
+                <div class="val" style="color:var(--green);">${s.total_financial_assets_cny ? fmtCNY(s.total_financial_assets_cny) : fmt(s.total_financial_assets_usd)}</div>
+                <div class="sub">${s.net_worth_cny ? '净值 '+fmtCNY(s.net_worth_cny) : ''}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">预计达成年龄</div>
+                <div class="val" style="color:${s.projected_fire_age && s.projected_fire_age <= p.target_retirement_age ? 'var(--green)' : 'var(--yellow)'};">${s.projected_fire_age ? s.projected_fire_age+'岁' : '--'}</div>
+                <div class="sub">${s.projected_fire_age && p.target_retirement_age ? (s.projected_fire_age <= p.target_retirement_age ? '提前'+(p.target_retirement_age-s.projected_fire_age)+'年' : '晚'+(s.projected_fire_age-p.target_retirement_age)+'年') : ''}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">家庭储蓄率</div>
+                <div class="val" style="color:var(--blue);">${s.savings_rate_pct != null ? s.savings_rate_pct.toFixed(0)+'%' : '--'}</div>
+                <div class="sub">年储蓄 ${s.annual_savings_cny ? fmtCNY(s.annual_savings_cny) : '--'}</div>
+            </div>
+        </div>
+
+        <!-- Progress Ring -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--accent);"></div>FIRE 进度</div>
+            <div class="ring-section">
+                <div class="ring">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <circle cx="70" cy="70" r="58" stroke="var(--border)" stroke-width="8" fill="none"/>
+                        <circle cx="70" cy="70" r="58" stroke="url(#pg)" stroke-width="8" fill="none"
+                            stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+                        <defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#7c6cf0"/><stop offset="100%" style="stop-color:#e879f9"/>
+                        </linearGradient></defs>
+                    </svg>
+                    <div class="center">
+                        <div class="pct">${progress.toFixed(1)}%</div>
+                        <div class="lbl">已完成</div>
+                    </div>
+                </div>
+                <div style="margin-top:8px;">
+                    <span class="tag tag-blue">${fireLabel}</span>
+                    ${p.current_age ? `<span style="margin-left:8px;font-size:11px;color:var(--text2);">${p.current_age}岁 → 目标${p.target_retirement_age}岁</span>` : ''}
+                </div>
+            </div>
+        </div>
+
+        <!-- Asset Allocation -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--green);"></div>资产配置</div>
+            <div class="alloc-bar">${allocItems.map(a=>`<div style="width:${a.pct}%;background:${a.color};"></div>`).join('')}</div>
+            <div class="alloc-legend">${allocItems.map(a=>`<div class="item"><div class="swatch" style="background:${a.color};"></div>${a.name} ${a.pct.toFixed(1)}%</div>`).join('')}</div>
+            ${allocItems.length > 0 ? `
+            <table style="margin-top:10px;">
+                <thead><tr><th>类别</th><th>当前</th><th>建议</th><th>状态</th></tr></thead>
+                <tbody>${allocItems.map(ai => {
+                    const recKey = ai.name==='美股'?'us_stocks_pct':ai.name==='港股'?'hk_intl_stocks_pct':ai.name==='债券'?'bonds_pct':ai.name==='现金'?'cash_pct':'gold_commodity_pct';
+                    const recPct = alloc.recommended ? alloc.recommended[recKey] : null;
+                    const diff = recPct != null ? ai.pct - recPct : null;
+                    const tag = diff === null ? '' : Math.abs(diff) < 3 ? '<span class="tag tag-green">适中</span>' : diff > 0 ? '<span class="tag tag-yellow">偏高</span>' : '<span class="tag tag-red">偏低</span>';
+                    return `<tr><td style="color:${ai.color};font-weight:600;">${ai.name}</td><td>${ai.pct.toFixed(1)}%</td><td>${recPct != null ? recPct+'%' : '--'}</td><td>${tag}</td></tr>`;
+                }).join('')}</tbody>
+            </table>` : ''}
+        </div>
+
+        <!-- Monthly Cashflow -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--yellow);"></div>家庭月度收支</div>
+            <table>
+                <tbody>
+                    <tr><td>家庭月收入</td><td class="mono" style="color:var(--green);font-weight:700;">${currSym}${(cf.total_income||0).toLocaleString()}</td></tr>
+                    <tr><td>月支出合计</td><td class="mono" style="color:var(--red);">${currSym}${(cf.total_expenses||0).toLocaleString()}</td></tr>
+                    <tr><td>月结余</td><td class="mono" style="color:var(--accent2);font-weight:700;">${currSym}${(cf.monthly_savings||0).toLocaleString()}</td></tr>
+                    <tr><td>年终奖合计</td><td class="mono" style="color:var(--green);">${ann.bonus_total ? currSym+ann.bonus_total.toLocaleString() : '--'}</td></tr>
+                    <tr style="border-top:1px solid var(--accent);"><td><strong>年度储蓄</strong></td><td class="mono" style="color:var(--accent2);font-weight:700;">${ann.annual_savings ? currSym+ann.annual_savings.toLocaleString() : '--'}</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FIRE Projection Chart -->
+        ${proj.length > 0 ? `
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--accent);"></div>资产增长投影</div>
+            <div class="chart-box"><canvas id="projChart"></canvas></div>
+        </div>` : ''}
+
+        <!-- Retirement Expense Model -->
+        ${DATA.retirement_expense_model ? `
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--red);"></div>退休后支出模型</div>
+            <div class="phase-grid">
+                ${DATA.retirement_expense_model.phases.map((ph,i) => {
+                    const colors = ['var(--red)','var(--yellow)','var(--green)','var(--blue)'];
+                    return `<div class="phase-card" style="border-color:${colors[i]};">
+                        <div class="name" style="color:${colors[i]};">${ph.name.replace(/阶段[一二三四]：/,'')}</div>
+                        <div class="age">${ph.age_range}</div>
+                        <div class="amount">${fmtCNY(ph.annual_total_rounded)}<span style="font-size:12px;font-weight:400;color:var(--text2);">/年</span></div>
+                        <div class="detail">${ph.years}年 · ${ph.child_age}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>` : ''}
+
+        <!-- Milestones -->
+        ${DATA.milestones && DATA.milestones.length > 0 ? `
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--accent);"></div>里程碑追踪</div>
+            ${DATA.milestones.map(m => {
+                const pct = m.progress_pct || (m.status === '已达成' ? 100 : 0);
+                const color = m.status === '已达成' ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--blue)';
+                return `<div style="padding:8px 0;border-bottom:1px solid rgba(42,48,66,0.4);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:12px;font-weight:600;">${m.name}</span>
+                        <span class="tag ${m.status==='已达成'?'tag-green':pct>=50?'tag-yellow':'tag-blue'}">${m.status==='已达成'?'已达成':pct.toFixed(0)+'%'}</span>
+                    </div>
+                    <div class="milestone-bar"><div class="fill" style="width:${Math.min(pct,100)}%;background:${color};"></div></div>
+                </div>`;
+            }).join('')}
+        </div>` : ''}
+
+        <!-- Recommendations -->
+        ${recsHTML ? `
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--yellow);"></div>智能建议</div>
+            ${recsHTML}
+        </div>` : ''}
+    `;
+
+    // Render chart
+    if (proj.length > 0) {
+        setTimeout(() => {
+            const canvas = document.getElementById('projChart');
+            if (!canvas) return;
+            if (chartInstance) chartInstance.destroy();
+            const fireTarget = s.fire_target_cny || (s.fire_target_usd * 7.2) || 0;
+            const useCNY = proj[0].projected_assets_cny !== undefined;
+            chartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: proj.map(p => p.age+'岁'),
+                    datasets: [{
+                        label: '预计资产',
+                        data: proj.map(p => useCNY ? p.projected_assets_cny : p.projected_assets_usd),
+                        borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.1)',
+                        fill: true, tension: 0.3, pointRadius: 4, pointHoverRadius: 6,
+                        pointBackgroundColor: proj.map(p => (useCNY?p.projected_assets_cny:p.projected_assets_usd) >= fireTarget ? '#34d399' : '#a78bfa'),
+                        borderWidth: 2
+                    },{
+                        label: 'FIRE 目标',
+                        data: proj.map(()=>fireTarget),
+                        borderColor: '#f87171', borderDash: [6,3], pointRadius: 0, borderWidth: 1.5, fill: false
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { labels: { color: '#8b93a7', font: { size: 10 } } },
+                        tooltip: {
+                            backgroundColor: '#1a1f2e', titleColor: '#e2e4e9', bodyColor: '#8b93a7',
+                            borderColor: '#2a3042', borderWidth: 1,
+                            callbacks: {
+                                label: ctx => {
+                                    const v = ctx.raw; const pct = fireTarget ? (v/fireTarget*100).toFixed(1) : 0;
+                                    if (ctx.datasetIndex === 0) return '资产: \u00a5'+(v/1e4).toFixed(0)+'万 ('+pct+'%)';
+                                    return 'FIRE目标: \u00a5'+(v/1e4).toFixed(0)+'万';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color:'#5a6178', font:{size:10} }, grid: { color:'rgba(42,48,66,0.5)' } },
+                        y: { ticks: { color:'#5a6178', font:{size:10}, callback: v=>'\u00a5'+(v/1e4).toFixed(0)+'万' }, grid: { color:'rgba(42,48,66,0.5)' } }
+                    }
+                }
+            });
+        }, 150);
+    }
+}
+
+// ==================== RENDER: ASSETS ====================
+function renderAssets() {
+    if (!DATA) return;
+    const a = DATA.assets;
+    const currSym = '\u00a5';
+    const re = a.real_estate && a.real_estate[0] ? a.real_estate[0] : null;
+
+    let usHTML = a.us_stocks.map(s => {
+        const c = s.gain_loss >= 0 ? 'var(--green)' : 'var(--red)';
+        const sign = s.gain_loss >= 0 ? '+' : '';
+        return `<tr><td class="ticker">${s.ticker}</td><td class="mono">$${(s.market_value||0).toLocaleString()}</td><td class="mono" style="color:${c};">${sign}${(s.gain_loss_pct||0).toFixed(1)}%</td></tr>`;
+    }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);">暂无</td></tr>';
+
+    let hkHTML = a.hk_stocks.map(s => {
+        const c = (s.gain_loss_hkd||0) >= 0 ? 'var(--green)' : 'var(--red)';
+        const sign = (s.gain_loss_hkd||0) >= 0 ? '+' : '';
+        return `<tr><td class="ticker">${s.ticker}</td><td class="mono">HK$${Math.round(s.market_value_hkd||s.market_value||0).toLocaleString()}</td><td class="mono" style="color:${c};">${sign}${(s.gain_loss_pct||0).toFixed(1)}%</td></tr>`;
+    }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);">暂无</td></tr>';
+
+    let cashHTML = a.cash.map(c => {
+        const sym = c.currency==='USD'?'$':c.currency==='HKD'?'HK$':'\u00a5';
+        return `<tr><td>${c.account}</td><td class="mono" style="color:var(--green);">${sym}${Math.round(c.amount).toLocaleString()}</td><td>${c.currency}</td></tr>`;
+    }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);">暂无</td></tr>';
+
+    let liabHTML = DATA.liabilities.map(l => {
+        const sym = l.currency==='CNY'?'\u00a5':l.currency==='HKD'?'HK$':'$';
+        return `<tr><td>${l.type}</td><td class="mono" style="color:var(--red);">${sym}${Math.round(l.balance).toLocaleString()}</td><td>${l.interest_rate}%</td></tr>`;
+    }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);">无负债</td></tr>';
+
+    const ann = DATA.annual_income || {};
+    const fm = DATA.family_members || {};
+
+    document.getElementById('assetsContent').innerHTML = `
+        <!-- Income Detail -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--yellow);"></div>家庭收支明细</div>
+            <table>
+                <tbody>
+                    <tr><td colspan="2" style="color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.5px;">本人月度收入</td></tr>
+                    <tr><td>税后工资</td><td class="mono" style="color:var(--green);">${fm.user ? currSym+fm.user.monthly_salary_after_tax.toLocaleString() : '--'}</td></tr>
+                    <tr><td>公积金</td><td class="mono" style="color:var(--green);">${fm.user ? currSym+fm.user.housing_fund.toLocaleString() : '--'}</td></tr>
+                    <tr><td colspan="2" style="color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.5px;padding-top:10px;">男朋友月度收入</td></tr>
+                    <tr><td>月收入</td><td class="mono" style="color:var(--green);">${fm.partner ? currSym+fm.partner.monthly_income.toLocaleString() : '--'}</td></tr>
+                    <tr><td colspan="2" style="color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.5px;padding-top:10px;">月度支出</td></tr>
+                    <tr><td>房贷月供</td><td class="mono" style="color:var(--red);">${currSym}${(DATA.monthly_cashflow.user_mortgage||17000).toLocaleString()}</td></tr>
+                    <tr><td>本人消费</td><td class="mono" style="color:var(--red);">${currSym}${(DATA.monthly_cashflow.user_living||9000).toLocaleString()}</td></tr>
+                    <tr><td>男朋友消费</td><td class="mono" style="color:var(--red);">${currSym}${(DATA.monthly_cashflow.partner_living||8000).toLocaleString()}</td></tr>
+                    <tr><td colspan="2" style="color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.5px;padding-top:10px;">年终奖</td></tr>
+                    <tr><td>本人</td><td class="mono" style="color:var(--green);">${ann.user_bonus ? currSym+'50万（含30万腾讯股票）' : '--'}</td></tr>
+                    <tr><td>男朋友</td><td class="mono" style="color:var(--green);">${ann.partner_bonus ? currSym+ann.partner_bonus.toLocaleString() : '--'}</td></tr>
+                    <tr style="border-top:2px solid var(--accent);"><td><strong>年度储蓄</strong></td><td class="mono" style="color:var(--accent2);font-weight:700;">${ann.annual_savings ? currSym+ann.annual_savings.toLocaleString() : '--'}</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- US Stocks -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--accent);"></div>美股持仓 <span style="font-size:10px;color:var(--text3);font-weight:400;">$${a.us_stocks.reduce((s,x)=>s+(x.market_value||0),0).toLocaleString()}</span></div>
+            <table>
+                <thead><tr><th>代码</th><th>市值</th><th>盈亏</th></tr></thead>
+                <tbody>${usHTML}</tbody>
+            </table>
+        </div>
+
+        <!-- HK Stocks -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:#e879f9;"></div>港股持仓 <span style="font-size:10px;color:var(--text3);font-weight:400;">HK$${a.hk_stocks.reduce((s,x)=>s+(x.market_value_hkd||x.market_value||0),0).toLocaleString()}</span></div>
+            <table>
+                <thead><tr><th>代码</th><th>市值</th><th>盈亏</th></tr></thead>
+                <tbody>${hkHTML}</tbody>
+            </table>
+        </div>
+
+        <!-- Cash -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--green);"></div>现金与存款</div>
+            <table>
+                <thead><tr><th>账户</th><th>金额</th><th>币种</th></tr></thead>
+                <tbody>${cashHTML}</tbody>
+            </table>
+        </div>
+
+        <!-- Liabilities -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--red);"></div>负债</div>
+            <table>
+                <thead><tr><th>类型</th><th>余额</th><th>利率</th></tr></thead>
+                <tbody>${liabHTML}</tbody>
+            </table>
+        </div>
+
+        ${re ? `
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--yellow);"></div>房产</div>
+            <table>
+                <tbody>
+                    <tr><td>估值</td><td class="mono">${currSym}${(re.estimated_value||0).toLocaleString()}</td></tr>
+                    <tr><td>贷款余额</td><td class="mono" style="color:var(--red);">${currSym}${(re.mortgage_balance||0).toLocaleString()}</td></tr>
+                    <tr><td>净值</td><td class="mono" style="color:var(--green);">${currSym}${(re.net_equity||0).toLocaleString()}</td></tr>
+                    <tr><td>利率</td><td class="mono">${re.interest_rate||'--'}%</td></tr>
+                </tbody>
+            </table>
+        </div>` : ''}
+
+        <!-- Change Log -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--text3);"></div>变更记录</div>
+            ${DATA.change_log.slice(-8).reverse().map(l =>
+                `<div class="log-item"><div class="log-date">${l.date}</div><div class="log-text">${l.action}${l.details?' - '+l.details:''}</div></div>`
+            ).join('')}
+        </div>
+
+        <!-- Assumptions -->
+        <div class="card">
+            <div class="card-head"><div class="dot" style="background:var(--text3);"></div>计算假设</div>
+            <table>
+                <tbody>
+                    <tr><td>年化回报率</td><td class="mono">${(DATA.assumptions.expected_annual_return*100).toFixed(1)}%</td></tr>
+                    <tr><td>通胀率</td><td class="mono">${(DATA.assumptions.inflation_rate*100).toFixed(1)}%</td></tr>
+                    <tr><td>安全提取率</td><td class="mono">${(DATA.assumptions.safe_withdrawal_rate*100).toFixed(1)}%</td></tr>
+                    <tr><td>预期寿命</td><td class="mono">${DATA.assumptions.life_expectancy}岁</td></tr>
+                    <tr><td>USD/CNY</td><td class="mono">${DATA.assumptions.usd_cny_rate}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// ==================== RENDER: EDIT ====================
+let editDirty = false;
+let pendingDelete = null; // {type, index}
+let modalContext = null; // {type, index?}
+
+function markDirty() {
+    editDirty = true;
+    document.getElementById('saveBar').classList.add('show');
+}
+
+function cancelEdits() {
+    editDirty = false;
+    document.getElementById('saveBar').classList.remove('show');
+    renderEdit();
+    toast('已放弃修改', '');
+}
+
+function toggleCollapse(id) {
+    const header = document.querySelector(`[data-collapse="${id}"]`);
+    const body = document.getElementById('collapse-' + id);
+    header.classList.toggle('open');
+    body.classList.toggle('open');
+}
+
+function openModal(title, bodyHTML, ctx) {
+    modalContext = ctx;
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = bodyHTML;
+    document.getElementById('editModal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('editModal').classList.remove('show');
+    modalContext = null;
+}
+
+function renderEdit() {
+    if (!DATA) {
+        document.getElementById('editContent').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text3);">请先加载数据</div>';
+        return;
+    }
+    const p = DATA.profile;
+    const cf = DATA.monthly_cashflow;
+    const fm = DATA.family_members || {};
+    const ann = DATA.annual_income || {};
+    const a = DATA.assets;
+    const re = a.real_estate && a.real_estate[0] ? a.real_estate[0] : null;
+    const assumptions = DATA.assumptions;
+
+    // US Stocks list
+    let usStocksList = a.us_stocks.map((s, i) => {
+        const c = (s.gain_loss_pct||0) >= 0 ? 'var(--green)' : 'var(--red)';
+        const sign = (s.gain_loss_pct||0) >= 0 ? '+' : '';
+        return `<div class="edit-list-item">
+            <div class="item-info">
+                <div class="item-ticker">${s.ticker}</div>
+                <div class="item-name">${s.name || ''} · ${s.shares}股</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="item-value">$${(s.market_value||0).toLocaleString()}</div>
+                <div class="item-sub" style="color:${c};">${sign}${(s.gain_loss_pct||0).toFixed(1)}%</div>
+            </div>
+            <div class="edit-list-actions">
+                <button class="icon-btn" onclick="openStockModal('us',${i})">&#9998;</button>
+                <button class="icon-btn icon-btn-danger" onclick="confirmDeleteItem('us_stock',${i},'${s.ticker}')">&#10005;</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // HK Stocks list
+    let hkStocksList = a.hk_stocks.map((s, i) => {
+        const c = (s.gain_loss_pct||0) >= 0 ? 'var(--green)' : 'var(--red)';
+        const sign = (s.gain_loss_pct||0) >= 0 ? '+' : '';
+        return `<div class="edit-list-item">
+            <div class="item-info">
+                <div class="item-ticker">${s.ticker}</div>
+                <div class="item-name">${s.name || ''} · ${s.shares}股</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="item-value">HK$${Math.round(s.market_value_hkd||s.market_value||0).toLocaleString()}</div>
+                <div class="item-sub" style="color:${c};">${sign}${(s.gain_loss_pct||0).toFixed(1)}%</div>
+            </div>
+            <div class="edit-list-actions">
+                <button class="icon-btn" onclick="openStockModal('hk',${i})">&#9998;</button>
+                <button class="icon-btn icon-btn-danger" onclick="confirmDeleteItem('hk_stock',${i},'${s.ticker}')">&#10005;</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Cash list
+    let cashList = a.cash.map((c, i) => {
+        const sym = c.currency==='USD'?'$':c.currency==='HKD'?'HK$':'\u00a5';
+        return `<div class="edit-list-item">
+            <div class="item-info">
+                <div class="item-ticker">${c.account}</div>
+                <div class="item-name">${c.currency}</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="item-value" style="color:var(--green);">${sym}${Math.round(c.amount).toLocaleString()}</div>
+            </div>
+            <div class="edit-list-actions">
+                <button class="icon-btn" onclick="openCashModal(${i})">&#9998;</button>
+                <button class="icon-btn icon-btn-danger" onclick="confirmDeleteItem('cash',${i},'${c.account}')">&#10005;</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Liabilities list
+    let liabList = DATA.liabilities.map((l, i) => {
+        const sym = l.currency==='CNY'?'\u00a5':l.currency==='HKD'?'HK$':'$';
+        return `<div class="edit-list-item">
+            <div class="item-info">
+                <div class="item-ticker">${l.type}</div>
+                <div class="item-name">${l.interest_rate}% · ${l.maturity||''}</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="item-value" style="color:var(--red);">${sym}${Math.round(l.balance).toLocaleString()}</div>
+                <div class="item-sub">月供 ${sym}${(l.monthly_payment||0).toLocaleString()}</div>
+            </div>
+            <div class="edit-list-actions">
+                <button class="icon-btn" onclick="openLiabilityModal(${i})">&#9998;</button>
+                <button class="icon-btn icon-btn-danger" onclick="confirmDeleteItem('liability',${i},'${l.type}')">&#10005;</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Retirement phases summary
+    const retModel = DATA.retirement_expense_model;
+    let phasesHTML = '';
+    if (retModel && retModel.phases) {
+        phasesHTML = retModel.phases.map((ph, i) => {
+            return `<div class="edit-list-item" onclick="openPhaseModal(${i})" style="cursor:pointer;">
+                <div class="item-info">
+                    <div class="item-ticker" style="font-size:12px;">${ph.name.replace(/阶段[一二三四]：/,'')}</div>
+                    <div class="item-name">${ph.age_range} · ${ph.years}年</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="item-value" style="color:var(--yellow);">\u00a5${(ph.annual_total_rounded||0).toLocaleString()}</div>
+                    <div class="item-sub">/年</div>
+                </div>
+                <div class="edit-list-actions">
+                    <button class="icon-btn">&#9998;</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    document.getElementById('editContent').innerHTML = `
+        <div id="deleteConfirmArea"></div>
+
+        <!-- ===== 基本信息 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header open" data-collapse="basic" onclick="toggleCollapse('basic')">
+                <div class="title"><span style="font-size:16px;">&#x1f464;</span> 基本信息</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body open" id="collapse-basic">
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">当前年龄</div>
+                        <input class="form-input" type="number" id="ed_age" value="${p.current_age||''}" placeholder="32" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">目标退休年龄</div>
+                        <input class="form-input" type="number" id="ed_retire_age" value="${p.target_retirement_age||''}" placeholder="45" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">FIRE类型</div>
+                        <select class="form-input" id="ed_fire_type" onchange="markDirty()">
+                            <option value="Lean FIRE" ${p.fire_type==='Lean FIRE'?'selected':''}>Lean FIRE</option>
+                            <option value="Standard FIRE" ${p.fire_type==='Standard FIRE'?'selected':''}>标准 FIRE</option>
+                            <option value="Fat FIRE" ${p.fire_type==='Fat FIRE'?'selected':''}>Fat FIRE</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="form-input-label">家庭状态</div>
+                        <input class="form-input" type="text" id="ed_family" value="${p.family_status||''}" placeholder="双人家庭" oninput="markDirty()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 本人收入 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header open" data-collapse="income" onclick="toggleCollapse('income')">
+                <div class="title"><span style="font-size:16px;">&#x1f4b0;</span> 本人收入</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body open" id="collapse-income">
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">税后月薪</div>
+                        <input class="form-input" type="number" id="ed_salary" value="${fm.user ? fm.user.monthly_salary_after_tax : ''}" placeholder="27000" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">公积金/月</div>
+                        <input class="form-input" type="number" id="ed_fund" value="${fm.user ? fm.user.housing_fund : ''}" placeholder="11000" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">年终奖（现金）</div>
+                        <input class="form-input" type="number" id="ed_bonus_cash" value="${fm.user ? fm.user.annual_bonus_cash : ''}" placeholder="200000" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">年终奖（股票）</div>
+                        <input class="form-input" type="number" id="ed_bonus_stock" value="${fm.user ? fm.user.annual_bonus_stock : ''}" placeholder="300000" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-input-label">月消费</div>
+                <input class="form-input" type="number" id="ed_expense" value="${fm.user ? fm.user.monthly_expense : ''}" placeholder="9000" oninput="markDirty()">
+            </div>
+        </div>
+
+        <!-- ===== 伴侣收入 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="partner" onclick="toggleCollapse('partner')">
+                <div class="title"><span style="font-size:16px;">&#x1f46b;</span> 伴侣收入</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-partner">
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">月收入</div>
+                        <input class="form-input" type="number" id="ed_p_income" value="${fm.partner ? fm.partner.monthly_income : ''}" placeholder="30000" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">年终奖</div>
+                        <input class="form-input" type="number" id="ed_p_bonus" value="${fm.partner ? fm.partner.annual_bonus : ''}" placeholder="100000" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-input-label">月消费</div>
+                <input class="form-input" type="number" id="ed_p_expense" value="${fm.partner ? fm.partner.monthly_expense : ''}" placeholder="8000" oninput="markDirty()">
+            </div>
+        </div>
+
+        <!-- ===== 美股持仓 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="us_stocks" onclick="toggleCollapse('us_stocks')">
+                <div class="title"><span style="font-size:16px;">&#x1f1fa;&#x1f1f8;</span> 美股持仓 <span style="font-size:11px;color:var(--text3);font-weight:400;">${a.us_stocks.length}只</span></div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-us_stocks">
+                ${usStocksList || '<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">暂无持仓</div>'}
+                <button class="add-btn" onclick="openStockModal('us',-1)">+ 添加美股</button>
+            </div>
+        </div>
+
+        <!-- ===== 港股持仓 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="hk_stocks" onclick="toggleCollapse('hk_stocks')">
+                <div class="title"><span style="font-size:16px;">&#x1f1ed;&#x1f1f0;</span> 港股持仓 <span style="font-size:11px;color:var(--text3);font-weight:400;">${a.hk_stocks.length}只</span></div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-hk_stocks">
+                ${hkStocksList || '<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">暂无持仓</div>'}
+                <button class="add-btn" onclick="openStockModal('hk',-1)">+ 添加港股</button>
+            </div>
+        </div>
+
+        <!-- ===== 现金存款 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="cash" onclick="toggleCollapse('cash')">
+                <div class="title"><span style="font-size:16px;">&#x1f4b5;</span> 现金存款</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-cash">
+                ${cashList || '<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">暂无</div>'}
+                <button class="add-btn" onclick="openCashModal(-1)">+ 添加现金账户</button>
+            </div>
+        </div>
+
+        <!-- ===== 负债 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="liabilities" onclick="toggleCollapse('liabilities')">
+                <div class="title"><span style="font-size:16px;">&#x1f4c9;</span> 负债</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-liabilities">
+                ${liabList || '<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">无负债</div>'}
+                <button class="add-btn" onclick="openLiabilityModal(-1)">+ 添加负债</button>
+            </div>
+        </div>
+
+        <!-- ===== 房产 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="realestate" onclick="toggleCollapse('realestate')">
+                <div class="title"><span style="font-size:16px;">&#x1f3e0;</span> 房产</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-realestate">
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">房产估值</div>
+                        <input class="form-input" type="number" id="ed_re_value" value="${re ? re.estimated_value : ''}" placeholder="3500000" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">贷款余额</div>
+                        <input class="form-input" type="number" id="ed_re_loan" value="${re ? re.mortgage_balance : ''}" placeholder="3100000" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">月供</div>
+                        <input class="form-input" type="number" id="ed_re_payment" value="${re ? re.monthly_payment : ''}" placeholder="17000" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">利率(%)</div>
+                        <input class="form-input" type="number" step="0.1" id="ed_re_rate" value="${re ? re.interest_rate : ''}" placeholder="3.2" oninput="markDirty()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 计算假设 ===== -->
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="assumptions" onclick="toggleCollapse('assumptions')">
+                <div class="title"><span style="font-size:16px;">&#x2699;</span> 计算假设</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-assumptions">
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">年化回报率(%)</div>
+                        <input class="form-input" type="number" step="0.1" id="ed_return" value="${(assumptions.expected_annual_return*100).toFixed(1)}" placeholder="7.0" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">通胀率(%)</div>
+                        <input class="form-input" type="number" step="0.1" id="ed_inflation" value="${(assumptions.inflation_rate*100).toFixed(1)}" placeholder="3.0" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">安全提取率(%)</div>
+                        <input class="form-input" type="number" step="0.1" id="ed_swr" value="${(assumptions.safe_withdrawal_rate*100).toFixed(1)}" placeholder="3.5" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">预期寿命</div>
+                        <input class="form-input" type="number" id="ed_lifeexp" value="${assumptions.life_expectancy||90}" placeholder="90" oninput="markDirty()">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <div class="form-input-label">USD/CNY 汇率</div>
+                        <input class="form-input" type="number" step="0.01" id="ed_usdcny" value="${assumptions.usd_cny_rate||7.2}" placeholder="7.2" oninput="markDirty()">
+                    </div>
+                    <div>
+                        <div class="form-input-label">USD/HKD 汇率</div>
+                        <input class="form-input" type="number" step="0.01" id="ed_usdhkd" value="${assumptions.usd_hkd_rate||7.8}" placeholder="7.8" oninput="markDirty()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 退休支出模型 ===== -->
+        ${retModel ? `
+        <div class="card" style="margin-bottom:8px;">
+            <div class="collapse-header" data-collapse="retirement" onclick="toggleCollapse('retirement')">
+                <div class="title"><span style="font-size:16px;">&#x1f3d6;</span> 退休支出模型</div>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="collapse-body" id="collapse-retirement">
+                ${phasesHTML}
+            </div>
+        </div>` : ''}
+
+        <div style="margin-top:16px;">
+            <button class="btn btn-primary" onclick="confirmSaveEdits()">&#x1f4be; 保存所有修改</button>
+        </div>
+        <div style="height:80px;"></div>
+    `;
+}
+
+// ==================== MODAL: Stock ====================
+function openStockModal(market, idx) {
+    const isNew = idx === -1;
+    const title = isNew ? `添加${market==='us'?'美':'港'}股` : `编辑${market==='us'?'美':'港'}股`;
+    const stocks = market === 'us' ? DATA.assets.us_stocks : DATA.assets.hk_stocks;
+    const s = isNew ? {} : stocks[idx];
+    const currLabel = market === 'us' ? 'USD' : 'HKD';
+    const priceLabel = market === 'us' ? '美元' : '港币';
+
+    const body = `
+        <div class="form-row">
+            <div>
+                <div class="form-input-label">股票代码</div>
+                <input class="form-input" type="text" id="md_ticker" value="${s.ticker||''}" placeholder="${market==='us'?'META':'00700'}" ${!isNew?'readonly style="opacity:0.6;"':''}>
+            </div>
+            <div>
+                <div class="form-input-label">名称</div>
+                <input class="form-input" type="text" id="md_name" value="${s.name||''}" placeholder="公司名称">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <div class="form-input-label">持股数量</div>
+                <input class="form-input" type="number" id="md_shares" value="${s.shares||''}" placeholder="100">
+            </div>
+            <div>
+                <div class="form-input-label">成本价(${priceLabel})</div>
+                <input class="form-input" type="number" step="0.01" id="md_cost" value="${s.cost_basis||''}" placeholder="100.00">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <div class="form-input-label">现价(${priceLabel})</div>
+                <input class="form-input" type="number" step="0.01" id="md_price" value="${market==='us'?s.current_price||'':s.current_price||''}" placeholder="120.00">
+            </div>
+            <div>
+                <div class="form-input-label">币种</div>
+                <input class="form-input" type="text" value="${currLabel}" readonly style="opacity:0.6;">
+            </div>
+        </div>
+        ${!isNew && s.note ? `<div style="font-size:11px;color:var(--text3);margin-top:4px;">备注：${s.note}</div>` : ''}
+    `;
+    openModal(title, body, { type: 'stock', market, index: idx });
+}
+
+function openCashModal(idx) {
+    const isNew = idx === -1;
+    const title = isNew ? '添加现金账户' : '编辑现金账户';
+    const c = isNew ? {} : DATA.assets.cash[idx];
+
+    const body = `
+        <div class="form-input-label">账户名称</div>
+        <input class="form-input" type="text" id="md_account" value="${c.account||''}" placeholder="如：人民币存款">
+        <div class="form-row" style="margin-top:10px;">
+            <div style="flex:2;">
+                <div class="form-input-label">金额</div>
+                <input class="form-input" type="number" id="md_amount" value="${c.amount||''}" placeholder="100000">
+            </div>
+            <div style="flex:1;">
+                <div class="form-input-label">币种</div>
+                <select class="form-input" id="md_currency">
+                    <option value="CNY" ${c.currency==='CNY'||!c.currency?'selected':''}>CNY</option>
+                    <option value="USD" ${c.currency==='USD'?'selected':''}>USD</option>
+                    <option value="HKD" ${c.currency==='HKD'?'selected':''}>HKD</option>
+                </select>
+            </div>
+        </div>
+    `;
+    openModal(title, body, { type: 'cash', index: idx });
+}
+
+function openLiabilityModal(idx) {
+    const isNew = idx === -1;
+    const title = isNew ? '添加负债' : '编辑负债';
+    const l = isNew ? {} : DATA.liabilities[idx];
+
+    const body = `
+        <div class="form-row">
+            <div>
+                <div class="form-input-label">类型</div>
+                <input class="form-input" type="text" id="md_liab_type" value="${l.type||''}" placeholder="如：房贷、车贷">
+            </div>
+            <div>
+                <div class="form-input-label">币种</div>
+                <select class="form-input" id="md_liab_currency">
+                    <option value="CNY" ${l.currency==='CNY'||!l.currency?'selected':''}>CNY</option>
+                    <option value="USD" ${l.currency==='USD'?'selected':''}>USD</option>
+                    <option value="HKD" ${l.currency==='HKD'?'selected':''}>HKD</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <div class="form-input-label">余额</div>
+                <input class="form-input" type="number" id="md_liab_balance" value="${l.balance||''}" placeholder="3100000">
+            </div>
+            <div>
+                <div class="form-input-label">利率(%)</div>
+                <input class="form-input" type="number" step="0.1" id="md_liab_rate" value="${l.interest_rate||''}" placeholder="3.2">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <div class="form-input-label">月供</div>
+                <input class="form-input" type="number" id="md_liab_monthly" value="${l.monthly_payment||''}" placeholder="17000">
+            </div>
+            <div>
+                <div class="form-input-label">到期时间</div>
+                <input class="form-input" type="text" id="md_liab_maturity" value="${l.maturity||''}" placeholder="2051年">
+            </div>
+        </div>
+    `;
+    openModal(title, body, { type: 'liability', index: idx });
+}
+
+function openPhaseModal(idx) {
+    const phase = DATA.retirement_expense_model.phases[idx];
+    if (!phase) return;
+    const mb = phase.monthly_breakdown || {};
+    const keys = Object.keys(mb);
+    const labels = {
+        mortgage:'房贷月供', couple_living:'夫妻生活费', travel:'旅行',
+        healthcare:'医疗保健', transport:'交通', entertainment:'娱乐消费',
+        home_misc:'家居杂项', child_school_fee:'学费', child_extracurricular:'课外班',
+        child_living:'孩子生活费', child_overseas_total:'海外留学总费用'
+    };
+
+    let fieldsHTML = keys.map(k => `
+        <div class="form-row">
+            <div style="flex:2;">
+                <div class="form-input-label">${labels[k]||k}</div>
+            </div>
+            <div style="flex:1;">
+                <input class="form-input phase-field" type="number" data-key="${k}" value="${mb[k]||0}" style="text-align:right;" placeholder="0">
+            </div>
+        </div>
+    `).join('');
+
+    const body = `
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">${phase.age_range} · ${phase.years}年 · ${phase.child_age}</div>
+        ${fieldsHTML}
+        <div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:8px;display:flex;justify-content:space-between;">
+            <span style="font-size:13px;font-weight:600;">月度合计</span>
+            <span style="font-size:13px;font-weight:700;color:var(--yellow);" id="phaseMonthlyTotal">\u00a5${(phase.monthly_total||0).toLocaleString()}</span>
+        </div>
+    `;
+    openModal(phase.name, body, { type: 'phase', index: idx });
+
+    // Live total calc
+    setTimeout(() => {
+        document.querySelectorAll('.phase-field').forEach(input => {
+            input.addEventListener('input', () => {
+                let total = 0;
+                document.querySelectorAll('.phase-field').forEach(f => { total += Number(f.value) || 0; });
+                document.getElementById('phaseMonthlyTotal').textContent = '\u00a5' + total.toLocaleString();
+            });
+        });
+    }, 100);
+}
+
+// ==================== MODAL: Save ====================
+function modalSave() {
+    if (!modalContext) return;
+    const ctx = modalContext;
+
+    if (ctx.type === 'stock') {
+        const ticker = (document.getElementById('md_ticker').value || '').trim().toUpperCase();
+        const name = (document.getElementById('md_name').value || '').trim();
+        const shares = Number(document.getElementById('md_shares').value) || 0;
+        const cost = Number(document.getElementById('md_cost').value) || 0;
+        const price = Number(document.getElementById('md_price').value) || 0;
+
+        if (!ticker) { toast('请输入股票代码', 'error'); return; }
+        if (shares <= 0) { toast('持股数量必须大于0', 'error'); return; }
+
+        const mv = shares * price;
+        const gl = (price - cost) * shares;
+        const glPct = cost > 0 ? ((price - cost) / cost * 100) : 0;
+
+        const stocks = ctx.market === 'us' ? DATA.assets.us_stocks : DATA.assets.hk_stocks;
+
+        if (ctx.index === -1) {
+            // Add new
+            const entry = {
+                ticker, name, shares, cost_basis: cost, current_price: price,
+                currency: ctx.market === 'us' ? 'USD' : 'HKD',
+                gain_loss_pct: parseFloat(glPct.toFixed(2))
+            };
+            if (ctx.market === 'us') {
+                entry.market_value = parseFloat(mv.toFixed(2));
+                entry.gain_loss = parseFloat(gl.toFixed(2));
+            } else {
+                entry.market_value_hkd = parseFloat(mv.toFixed(2));
+                entry.market_value_usd = Math.round(mv / DATA.assumptions.usd_hkd_rate);
+                entry.gain_loss_hkd = parseFloat(gl.toFixed(2));
+            }
+            stocks.push(entry);
+        } else {
+            // Update existing
+            const s = stocks[ctx.index];
+            s.name = name;
+            s.shares = shares;
+            s.cost_basis = cost;
+            s.current_price = price;
+            s.gain_loss_pct = parseFloat(glPct.toFixed(2));
+            if (ctx.market === 'us') {
+                s.market_value = parseFloat(mv.toFixed(2));
+                s.gain_loss = parseFloat(gl.toFixed(2));
+            } else {
+                s.market_value_hkd = parseFloat(mv.toFixed(2));
+                s.market_value_usd = Math.round(mv / DATA.assumptions.usd_hkd_rate);
+                s.gain_loss_hkd = parseFloat(gl.toFixed(2));
+            }
+        }
+        markDirty();
+
+    } else if (ctx.type === 'cash') {
+        const account = (document.getElementById('md_account').value || '').trim();
+        const amount = Number(document.getElementById('md_amount').value) || 0;
+        const currency = document.getElementById('md_currency').value;
+
+        if (!account) { toast('请输入账户名称', 'error'); return; }
+
+        if (ctx.index === -1) {
+            DATA.assets.cash.push({ account, amount, currency });
+        } else {
+            const c = DATA.assets.cash[ctx.index];
+            c.account = account;
+            c.amount = amount;
+            c.currency = currency;
+        }
+        markDirty();
+
+    } else if (ctx.type === 'liability') {
+        const type = (document.getElementById('md_liab_type').value || '').trim();
+        const currency = document.getElementById('md_liab_currency').value;
+        const balance = Number(document.getElementById('md_liab_balance').value) || 0;
+        const rate = Number(document.getElementById('md_liab_rate').value) || 0;
+        const monthly = Number(document.getElementById('md_liab_monthly').value) || 0;
+        const maturity = (document.getElementById('md_liab_maturity').value || '').trim();
+
+        if (!type) { toast('请输入负债类型', 'error'); return; }
+
+        if (ctx.index === -1) {
+            DATA.liabilities.push({ type, balance, interest_rate: rate, monthly_payment: monthly, currency, maturity });
+        } else {
+            const l = DATA.liabilities[ctx.index];
+            l.type = type; l.balance = balance; l.interest_rate = rate;
+            l.monthly_payment = monthly; l.currency = currency; l.maturity = maturity;
+        }
+        markDirty();
+
+    } else if (ctx.type === 'phase') {
+        const phase = DATA.retirement_expense_model.phases[ctx.index];
+        let total = 0;
+        document.querySelectorAll('.phase-field').forEach(input => {
+            const key = input.dataset.key;
+            const val = Number(input.value) || 0;
+            phase.monthly_breakdown[key] = val;
+            total += val;
+        });
+        phase.monthly_total = total;
+        phase.annual_total = total * 12;
+        phase.annual_total_rounded = Math.round(total * 12 / 10000) * 10000;
+        markDirty();
+    }
+
+    closeModal();
+    renderEdit();
+    toast(ctx.index === -1 ? '已添加' : '已更新', 'success');
+}
+
+// ==================== DELETE ====================
+function confirmDeleteItem(type, index, name) {
+    const area = document.getElementById('deleteConfirmArea');
+    area.innerHTML = `
+        <div class="confirm-delete">
+            <p>确定要删除「${name}」吗？</p>
+            <div class="btns">
+                <button class="btn btn-outline btn-sm" onclick="document.getElementById('deleteConfirmArea').innerHTML=''">取消</button>
+                <button class="btn btn-danger btn-sm" onclick="doDelete('${type}',${index})">删除</button>
+            </div>
+        </div>
+    `;
+    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function doDelete(type, index) {
+    if (type === 'us_stock') {
+        DATA.assets.us_stocks.splice(index, 1);
+    } else if (type === 'hk_stock') {
+        DATA.assets.hk_stocks.splice(index, 1);
+    } else if (type === 'cash') {
+        DATA.assets.cash.splice(index, 1);
+    } else if (type === 'liability') {
+        DATA.liabilities.splice(index, 1);
+    }
+    markDirty();
+    renderEdit();
+    toast('已删除', 'success');
+}
+
+// ==================== SAVE ALL EDITS ====================
+function confirmSaveEdits() {
+    saveEdits();
+    editDirty = false;
+    document.getElementById('saveBar').classList.remove('show');
+}
+
+function saveEdits() {
+    if (!DATA) return;
+    const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const n = id => { const val = v(id); return val !== '' ? Number(val) : null; };
+
+    // Profile
+    if (n('ed_age') != null) DATA.profile.current_age = n('ed_age');
+    if (n('ed_retire_age') != null) DATA.profile.target_retirement_age = n('ed_retire_age');
+    DATA.profile.fire_type = v('ed_fire_type');
+    if (v('ed_family')) DATA.profile.family_status = v('ed_family');
+
+    // User income
+    if (!DATA.family_members) DATA.family_members = {};
+    if (!DATA.family_members.user) DATA.family_members.user = { role: '本人' };
+    const u = DATA.family_members.user;
+    if (n('ed_salary') != null) u.monthly_salary_after_tax = n('ed_salary');
+    if (n('ed_fund') != null) u.housing_fund = n('ed_fund');
+    if (n('ed_bonus_cash') != null) u.annual_bonus_cash = n('ed_bonus_cash');
+    if (n('ed_bonus_stock') != null) u.annual_bonus_stock = n('ed_bonus_stock');
+    u.annual_bonus_total = (u.annual_bonus_cash || 0) + (u.annual_bonus_stock || 0);
+    u.monthly_total_income = (u.monthly_salary_after_tax || 0) + (u.housing_fund || 0);
+    if (n('ed_expense') != null) u.monthly_expense = n('ed_expense');
+
+    // Partner
+    if (!DATA.family_members.partner) DATA.family_members.partner = { role: '男朋友' };
+    const pt = DATA.family_members.partner;
+    if (n('ed_p_income') != null) pt.monthly_income = n('ed_p_income');
+    if (n('ed_p_bonus') != null) pt.annual_bonus = n('ed_p_bonus');
+    if (n('ed_p_expense') != null) pt.monthly_expense = n('ed_p_expense');
+
+    // Cashflow
+    const cf = DATA.monthly_cashflow;
+    cf.user_income = u.monthly_total_income;
+    cf.partner_income = pt.monthly_income || 0;
+    cf.total_income = cf.user_income + cf.partner_income;
+    cf.user_mortgage = n('ed_re_payment') || cf.user_mortgage || 0;
+    cf.user_living = u.monthly_expense || cf.user_living || 0;
+    cf.partner_living = pt.monthly_expense || cf.partner_living || 0;
+    cf.total_expenses = cf.user_mortgage + cf.user_living + cf.partner_living;
+    cf.monthly_savings = cf.total_income - cf.total_expenses;
+
+    // Annual income
+    const ai = DATA.annual_income;
+    ai.monthly_salary_total = cf.total_income * 12;
+    ai.user_bonus = u.annual_bonus_total;
+    ai.partner_bonus = pt.annual_bonus || 0;
+    ai.bonus_total = ai.user_bonus + ai.partner_bonus;
+    ai.annual_total_income = ai.monthly_salary_total + ai.bonus_total;
+    ai.annual_total_expenses = cf.total_expenses * 12;
+    ai.annual_savings = ai.annual_total_income - ai.annual_total_expenses;
+    ai.annual_savings_usd = Math.round(ai.annual_savings / DATA.assumptions.usd_cny_rate);
+    ai.comprehensive_savings_rate = ai.annual_total_income > 0 ? (ai.annual_savings / ai.annual_total_income * 100) : 0;
+
+    // Real estate
+    if (DATA.assets.real_estate && DATA.assets.real_estate[0]) {
+        const re = DATA.assets.real_estate[0];
+        if (n('ed_re_value') != null) re.estimated_value = n('ed_re_value');
+        if (n('ed_re_loan') != null) re.mortgage_balance = n('ed_re_loan');
+        re.net_equity = (re.estimated_value || 0) - (re.mortgage_balance || 0);
+        if (n('ed_re_payment') != null) re.monthly_payment = n('ed_re_payment');
+        if (n('ed_re_rate') != null) re.interest_rate = n('ed_re_rate');
+        re.estimated_value_usd = Math.round((re.estimated_value || 0) / DATA.assumptions.usd_cny_rate);
+        re.mortgage_balance_usd = Math.round((re.mortgage_balance || 0) / DATA.assumptions.usd_cny_rate);
+        re.net_equity_usd = re.estimated_value_usd - re.mortgage_balance_usd;
+    }
+
+    // Liabilities sync with real estate
+    if (DATA.liabilities[0] && DATA.liabilities[0].type === '房贷') {
+        DATA.liabilities[0].balance = n('ed_re_loan') || DATA.liabilities[0].balance;
+        DATA.liabilities[0].monthly_payment = n('ed_re_payment') || DATA.liabilities[0].monthly_payment;
+        if (n('ed_re_rate') != null) DATA.liabilities[0].interest_rate = n('ed_re_rate');
+    }
+
+    // Assumptions
+    if (n('ed_return') != null) DATA.assumptions.expected_annual_return = n('ed_return') / 100;
+    if (n('ed_inflation') != null) DATA.assumptions.inflation_rate = n('ed_inflation') / 100;
+    if (n('ed_swr') != null) DATA.assumptions.safe_withdrawal_rate = n('ed_swr') / 100;
+    if (n('ed_lifeexp') != null) DATA.assumptions.life_expectancy = n('ed_lifeexp');
+    if (n('ed_usdcny') != null) DATA.assumptions.usd_cny_rate = n('ed_usdcny');
+    if (n('ed_usdhkd') != null) DATA.assumptions.usd_hkd_rate = n('ed_usdhkd');
+
+    // Recalculate everything
+    recalcSummary();
+    recalcProjection();
+    recalcMilestones();
+    recalcFireTarget();
+
+    // Add change log entry
+    const today = new Date().toISOString().split('T')[0];
+    DATA.change_log.push({ date: today, action: '手机端编辑', details: '通过App更新了财务数据' });
+
+    // Save
+    saveData();
+    // Re-render dashboard
+    renderDashboard();
+    switchPage('dashboard');
+}
+
+function recalcSummary() {
+    const s = DATA.fire_summary;
+    const rate = DATA.assumptions.usd_cny_rate;
+    const hkRate = DATA.assumptions.usd_hkd_rate || 7.8;
+    const a = DATA.assets;
+
+    // Recalc totals
+    let cashUSD = 0;
+    a.cash.forEach(c => { cashUSD += c.currency === 'USD' ? c.amount : c.currency === 'HKD' ? c.amount / hkRate : c.amount / rate; });
+    s.total_cash_usd = Math.round(cashUSD);
+    s.total_us_stocks_usd = Math.round(a.us_stocks.reduce((sum, x) => sum + (x.market_value || 0), 0));
+    s.total_hk_stocks_usd = Math.round(a.hk_stocks.reduce((sum, x) => sum + (x.market_value_usd || (x.market_value_hkd || 0) / hkRate), 0));
+    s.total_financial_assets_usd = s.total_cash_usd + s.total_us_stocks_usd + s.total_hk_stocks_usd;
+    s.total_financial_assets_cny = Math.round(s.total_financial_assets_usd * rate);
+
+    const reEquity = a.real_estate && a.real_estate[0] ? (a.real_estate[0].net_equity_usd || Math.round((a.real_estate[0].net_equity || 0) / rate)) : 0;
+    s.real_estate_equity_usd = reEquity;
+    s.net_worth_usd = s.total_financial_assets_usd + reEquity;
+    s.net_worth_cny = Math.round(s.net_worth_usd * rate);
+
+    s.fire_progress_pct = s.fire_target_cny > 0 ? (s.total_financial_assets_cny / s.fire_target_cny * 100) : 0;
+    s.savings_rate_pct = DATA.annual_income.comprehensive_savings_rate;
+    s.annual_savings_cny = DATA.annual_income.annual_savings;
+    s.annual_savings_usd = DATA.annual_income.annual_savings_usd;
+
+    // Recalc allocation
+    const total = s.total_financial_assets_usd;
+    if (total > 0) {
+        DATA.allocation.us_stocks_pct = parseFloat((s.total_us_stocks_usd / total * 100).toFixed(1));
+        DATA.allocation.hk_stocks_pct = parseFloat((s.total_hk_stocks_usd / total * 100).toFixed(1));
+        DATA.allocation.cash_pct = parseFloat((s.total_cash_usd / total * 100).toFixed(1));
+        // bonds + other = remainder
+        const stocksCashPct = DATA.allocation.us_stocks_pct + DATA.allocation.hk_stocks_pct + DATA.allocation.cash_pct;
+        DATA.allocation.bonds_pct = parseFloat(Math.max(0, 100 - stocksCashPct).toFixed(1));
+    }
+}
+
+function recalcProjection() {
+    const s = DATA.fire_summary;
+    const p = DATA.profile;
+    const annualReturn = DATA.assumptions.expected_annual_return || 0.07;
+    const annualSavings = s.annual_savings_cny || DATA.annual_income.annual_savings || 0;
+    const currentAssets = s.total_financial_assets_cny || 0;
+    const targetAge = p.target_retirement_age || 45;
+    const currentAge = p.current_age || 32;
+    const currentYear = new Date().getFullYear();
+    const fireTarget = s.fire_target_cny || 16000000;
+
+    const projection = [];
+    let assets = currentAssets;
+    let fireAge = null;
+
+    for (let age = currentAge; age <= Math.max(targetAge + 5, currentAge + 20); age++) {
+        const year = currentYear + (age - currentAge);
+        const pct = fireTarget > 0 ? parseFloat((assets / fireTarget * 100).toFixed(1)) : 0;
+        projection.push({
+            age, year,
+            projected_assets_cny: Math.round(assets),
+            projected_assets_usd: Math.round(assets / DATA.assumptions.usd_cny_rate),
+            fire_pct: pct
+        });
+        if (assets >= fireTarget && !fireAge) {
+            fireAge = age;
+        }
+        // Compound growth + savings
+        assets = assets * (1 + annualReturn) + annualSavings;
+        // Stop if well past target
+        if (assets >= fireTarget * 1.3 && age > targetAge) break;
+    }
+
+    DATA.fire_projection = projection;
+    s.projected_fire_age = fireAge || (targetAge + 10);
+    s.years_to_fire = fireAge ? fireAge - currentAge : null;
+}
+
+function recalcMilestones() {
+    const s = DATA.fire_summary;
+    const currentCNY = s.total_financial_assets_cny || 0;
+    const currentUSD = s.total_financial_assets_usd || 0;
+
+    const targets = [
+        { name: '应急基金(6个月家庭支出)', target_cny: (DATA.monthly_cashflow.total_expenses || 34000) * 6 },
+        { name: '家庭金融资产100万', target_cny: 1000000 },
+        { name: '家庭金融资产500万', target_cny: 5000000 },
+        { name: 'FIRE目标50% (' + Math.round((s.fire_target_cny||16000000)/20000) + '万)', target_cny: (s.fire_target_cny||16000000)/2 },
+        { name: '家庭金融资产1000万', target_cny: 10000000 },
+        { name: 'FIRE目标100% (' + Math.round((s.fire_target_cny||16000000)/10000) + '万)', target_cny: s.fire_target_cny||16000000 }
+    ];
+
+    DATA.milestones = targets.map(t => {
+        const pct = t.target_cny > 0 ? (currentCNY / t.target_cny * 100) : 0;
+        return {
+            name: t.name,
+            target_cny: Math.round(t.target_cny),
+            current_cny: Math.round(currentCNY),
+            target_usd: Math.round(t.target_cny / DATA.assumptions.usd_cny_rate),
+            current_usd: Math.round(currentUSD),
+            status: pct >= 100 ? '已达成' : '进行中',
+            progress_pct: parseFloat(Math.min(pct, 100).toFixed(1))
+        };
+    });
+}
+
+function recalcFireTarget() {
+    // Recalculate FIRE target using phased cashflow discount method
+    const retModel = DATA.retirement_expense_model;
+    if (!retModel || !retModel.phases) return;
+
+    const realReturn = (DATA.assumptions.expected_annual_return || 0.07) - (DATA.assumptions.inflation_rate || 0.03);
+    const discountRate = Math.max(realReturn, 0.02);
+    const retireAge = DATA.profile.target_retirement_age || 45;
+
+    let totalPV = 0;
+    let ageOffset = 0;
+
+    retModel.phases.forEach(phase => {
+        const annualExpense = phase.annual_total_rounded || phase.annual_total || (phase.monthly_total * 12);
+        const years = phase.years || 1;
+
+        // PV of annuity starting at ageOffset years from retirement
+        for (let y = 0; y < years; y++) {
+            const yearFromRetirement = ageOffset + y;
+            totalPV += annualExpense / Math.pow(1 + discountRate, yearFromRetirement);
+        }
+        ageOffset += years;
+    });
+
+    // Add 15% safety margin
+    const withMargin = totalPV * 1.15;
+    const roundedTarget = Math.round(withMargin / 100000) * 100000; // Round to nearest 10万
+
+    DATA.fire_target_calculation.present_value_breakdown.subtotal_pv_cny = Math.round(totalPV);
+    DATA.fire_target_calculation.present_value_breakdown.total_with_margin_cny = Math.round(withMargin);
+    DATA.fire_target_calculation.fire_target_cny = roundedTarget;
+    DATA.fire_target_calculation.fire_target_usd = Math.round(roundedTarget / DATA.assumptions.usd_cny_rate);
+    DATA.fire_target_calculation.fire_target_cny_wan = Math.round(roundedTarget / 10000);
+
+    DATA.fire_summary.fire_target_cny = roundedTarget;
+    DATA.fire_summary.fire_target_usd = Math.round(roundedTarget / DATA.assumptions.usd_cny_rate);
+}
+
+// ==================== RENDER: PROFILE ====================
+function renderProfile() {
+    const isLoggedIn = supabaseClient && currentUser;
+
+    document.getElementById('profileContent').innerHTML = `
+        <div style="text-align:center;padding:20px 0;">
+            <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#e879f9);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;">
+                ${isLoggedIn ? '&#x1f464;' : '&#x1f512;'}
+            </div>
+            <div style="font-size:16px;font-weight:600;">${isLoggedIn ? currentUser.email : '未登录'}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:4px;">${isLoggedIn ? '数据已同步到云端' : '登录后可多设备同步数据'}</div>
+        </div>
+
+        ${!isLoggedIn ? `
+        <div class="card">
+            <div class="section-title" style="margin-top:0;">&#x2601; 云端同步</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">登录后数据自动同步到云端，支持多设备访问。</p>
+            <div class="form-input-label">邮箱</div>
+            <input class="form-input" type="email" id="auth_email" placeholder="your@email.com">
+            <div class="form-input-label" style="margin-top:8px;">密码</div>
+            <input class="form-input" type="password" id="auth_password" placeholder="至少6位">
+            <div style="display:flex;gap:10px;margin-top:14px;">
+                <button class="btn btn-primary" style="flex:1;" onclick="doAuth('login')">登录</button>
+                <button class="btn btn-outline" style="flex:1;" onclick="doAuth('signup')">注册</button>
+            </div>
+            <div class="auth-divider">或</div>
+            <p style="font-size:11px;color:var(--text3);text-align:center;">不登录也可以使用，数据保存在本地设备</p>
+        </div>` : `
+        <div class="card">
+            <div class="setting-item">
+                <span class="label">账号</span>
+                <span class="value">${currentUser.email}</span>
+            </div>
+            <div class="setting-item">
+                <span class="label">同步状态</span>
+                <span class="value" style="color:var(--green);">已连接</span>
+            </div>
+            <button class="btn btn-outline" style="margin-top:10px;" onclick="doLogout()">退出登录</button>
+        </div>`}
+
+        <div class="card" style="margin-top:12px;">
+            <div class="section-title" style="margin-top:0;">&#x2699; 设置</div>
+            <div class="setting-item">
+                <span class="label">数据更新日期</span>
+                <span class="value">${DATA ? DATA.meta.last_updated : '--'}</span>
+            </div>
+            <div class="setting-item">
+                <span class="label">数据版本</span>
+                <span class="value">${DATA ? DATA.meta.version : '--'}</span>
+            </div>
+            <div class="setting-item">
+                <span class="label">App 版本</span>
+                <span class="value">PWA v1.0.0</span>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+            <div class="section-title" style="margin-top:0;">&#x1f4f1; 添加到桌面</div>
+            <p style="font-size:12px;color:var(--text2);line-height:1.8;">
+                <strong>iPhone:</strong> Safari 打开 → 点击底部分享按钮 → 选择「添加到主屏幕」<br>
+                <strong>Android:</strong> Chrome 打开 → 点击右上角菜单 → 选择「添加到主屏幕」
+            </p>
+        </div>
+
+        <div style="margin-top:16px;">
+            <button class="btn btn-outline" onclick="exportData()">&#x1f4e4; 导出数据 (JSON)</button>
+        </div>
+        <div style="margin-top:10px;">
+            <button class="btn btn-outline" onclick="importData()">&#x1f4e5; 导入数据</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="handleImport(event)">
+        </div>
+
+        <div style="text-align:center;padding:20px;font-size:10px;color:var(--text3);margin-top:20px;">
+            FIRE 家庭财务自由 PWA<br>
+            Fat FIRE · 45岁退休 · 高品质生活 + 孩子教育<br>
+            本工具仅供参考，不构成投资建议
+        </div>
+    `;
+}
+
+// ==================== AUTH ====================
+async function initSupabase() {
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+        updateSyncStatus('local');
+        return;
+    }
+    try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            currentUser = session.user;
+            updateSyncStatus('synced');
+        } else {
+            updateSyncStatus('local');
+        }
+    } catch(e) {
+        console.log('Supabase init failed');
+        updateSyncStatus('local');
+    }
+}
+
+async function doAuth(type) {
+    if (!supabaseClient) {
+        toast('请先配置 Supabase', 'error');
+        return;
+    }
+    const email = document.getElementById('auth_email').value;
+    const password = document.getElementById('auth_password').value;
+    if (!email || !password) { toast('请填写邮箱和密码', 'error'); return; }
+
+    try {
+        let result;
+        if (type === 'signup') {
+            result = await supabaseClient.auth.signUp({ email, password });
+        } else {
+            result = await supabaseClient.auth.signInWithPassword({ email, password });
+        }
+        if (result.error) throw result.error;
+        currentUser = result.data.user;
+        updateSyncStatus('synced');
+        toast(type === 'signup' ? '注册成功！' : '登录成功！', 'success');
+        // Sync data after login
+        if (DATA) saveData();
+        renderProfile();
+    } catch(e) {
+        toast(e.message || '认证失败', 'error');
+    }
+}
+
+async function doLogout() {
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
+    currentUser = null;
+    updateSyncStatus('local');
+    toast('已退出登录', '');
+    renderProfile();
+}
+
+// ==================== IMPORT / EXPORT ====================
+function exportData() {
+    if (!DATA) { toast('没有数据可导出', 'error'); return; }
+    const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `fire_data_${new Date().toISOString().split('T')[0]}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    toast('数据已导出', 'success');
+}
+
+function importData() {
+    document.getElementById('importFile').click();
+}
+
+function handleImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            DATA = JSON.parse(ev.target.result);
+            saveData();
+            renderDashboard();
+            switchPage('dashboard');
+            toast('数据导入成功！', 'success');
+        } catch(err) {
+            toast('文件格式错误', 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// ==================== SERVICE WORKER ====================
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(e => console.log('SW failed'));
+}
+
+// ==================== INIT ====================
+async function init() {
+    await initSupabase();
+    await loadData();
+    renderDashboard();
+    document.getElementById('headerSub').textContent = DATA ?
+        `${DATA.profile.fire_type || 'Fat FIRE'} · ${DATA.profile.target_retirement_age || 45}岁退休` : 'FIRE 财务自由规划';
+}
+
+init();
+</script>
+</body>
+</html>

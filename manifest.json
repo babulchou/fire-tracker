@@ -1,0 +1,24 @@
+{
+  "name": "FIRE 家庭财务自由",
+  "short_name": "FIRE财务",
+  "description": "家庭 Fat FIRE 财务自由规划仪表盘",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#7c6cf0",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
