@@ -1,10 +1,10 @@
-const CACHE_NAME = 'fire-dashboard-v2';
+const CACHE_NAME = 'fire-dashboard-v3';
 const ASSETS = [
-  '/',
-  '/app.html',
-  '/stock-api.js',
-  '/manifest.json',
-  '/financial_data.json',
+  '/fire-tracker/',
+  '/fire-tracker/app.html',
+  '/fire-tracker/stock-api.js',
+  '/fire-tracker/manifest.json',
+  '/fire-tracker/financial_data.json',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
 ];
